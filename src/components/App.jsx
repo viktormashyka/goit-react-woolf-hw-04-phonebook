@@ -1,63 +1,45 @@
-import React, { Component } from 'react';
+import { useState, useEffect } from 'react';
 import { nanoid } from 'nanoid';
 import { ToastContainer, toast } from 'react-toastify';
 import 'react-toastify/dist/ReactToastify.css';
 
 import css from './App.module.css';
-import ContactForm from 'components/ContactForm/ContactForm';
+import { ContactForm } from 'components/ContactForm/ContactForm';
 import { Filter } from 'components/Filter/Filter';
 import { ContactList } from 'components/ContactList/ContactList';
 
-class App extends Component {
-  state = {
-    contacts: [
-      { id: 'id-1', name: 'Rosie Simpson', number: '459-12-56' },
-      { id: 'id-2', name: 'Hermione Kline', number: '443-89-12' },
-      { id: 'id-3', name: 'Eden Clements', number: '645-17-79' },
-      { id: 'id-4', name: 'Annie Copeland', number: '227-91-26' },
-    ],
-    filter: '',
+export const App = () => {
+  const [contacts, setContacts] = useState([]);
+  const [filter, setFilter] = useState('');
+
+  useEffect(() => {
+    const parsedContacts = JSON.parse(localStorage.getItem('phoneContacts'));
+    if (Array.isArray(parsedContacts) && parsedContacts?.length > 0) {
+      setContacts(parsedContacts);
+    }
+  }, []);
+
+  useEffect(() => {
+    localStorage.setItem('phoneContacts', JSON.stringify(contacts));
+  }, [contacts]);
+
+  const handleChange = evt => {
+    setFilter(evt.currentTarget.value);
   };
 
-  componentDidMount() {
-    const storagedContacts = JSON.parse(localStorage.getItem('phoneContacts'));
-    if (storagedContacts) {
-      this.setState({
-        contacts: [...storagedContacts],
-      });
-    }
-  }
-
-  componentDidUpdate(prevProps, prevState) {
-    if (prevState.contacts !== this.state.contacts) {
-      localStorage.setItem(
-        'phoneContacts',
-        JSON.stringify(this.state.contacts)
-      );
-    }
-  }
-
-  changeFilter = evt => {
-    this.setState({ filter: evt.currentTarget.value });
-  };
-
-  filterContacts = () => {
-    return this.state.contacts.filter(contact =>
-      contact.name
-        .toLocaleLowerCase()
-        .includes(this.state.filter.toLocaleLowerCase())
+  const filterContacts = () => {
+    return contacts.filter(contact =>
+      contact.name.toLocaleLowerCase().includes(filter.toLocaleLowerCase())
     );
   };
 
-  handleDelete = id => {
-    this.setState(prev => ({
-      contacts: prev.contacts.filter(item => item.id !== id),
-    }));
+  const handleDelete = id => {
+    setContacts(prevContacts => prevContacts.filter(item => item.id !== id));
   };
 
-  onAddContact = newContact => {
+  const onAddContact = newContact => {
     if (
-      this.state.contacts.some(
+      contacts.some(
         contact =>
           contact.name.toLocaleLowerCase() ===
           newContact.name.toLocaleLowerCase()
@@ -67,29 +49,25 @@ class App extends Component {
       return;
     }
 
-    this.setState(prevState => ({
-      contacts: [...prevState.contacts, { ...newContact, id: nanoid() }],
-    }));
+    setContacts(prevContacts => [
+      ...prevContacts,
+      { ...newContact, id: nanoid() },
+    ]);
   };
 
-  render() {
-    const { filter, contacts } = this.state;
-    const filteredContacts = this.filterContacts();
-    return (
-      <div className={css.container}>
-        <h1 className={css.title}>Phonebook</h1>
-        <ContactForm contacts={contacts} onAddContact={this.onAddContact} />
+  const filteredContacts = filterContacts();
+  return (
+    <div className={css.container}>
+      <h1 className={css.title}>Phonebook</h1>
+      <ContactForm onAddContact={onAddContact} />
 
-        <h2 className={css.subtitle}>Contacts</h2>
-        <Filter filter={filter} onChange={this.changeFilter} />
-        <ContactList
-          filteredContacts={filteredContacts}
-          handleDelete={this.handleDelete}
-        />
-        <ToastContainer />
-      </div>
-    );
-  }
-}
-
-export { App };
+      <h2 className={css.subtitle}>Contacts</h2>
+      <Filter filter={filter} onChange={handleChange} />
+      <ContactList
+        filteredContacts={filteredContacts}
+        handleDelete={handleDelete}
+      />
+      <ToastContainer />
+    </div>
+  );
+};
