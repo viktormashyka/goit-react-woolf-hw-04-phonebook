@@ -9,15 +9,10 @@ import { Filter } from 'components/Filter/Filter';
 import { ContactList } from 'components/ContactList/ContactList';
 
 export const App = () => {
-  const [contacts, setContacts] = useState([]);
+  const [contacts, setContacts] = useState(
+    () => JSON.parse(localStorage.getItem('phoneContacts')) ?? []
+  );
   const [filter, setFilter] = useState('');
-
-  useEffect(() => {
-    const parsedContacts = JSON.parse(localStorage.getItem('phoneContacts'));
-    if (Array.isArray(parsedContacts) && parsedContacts?.length > 0) {
-      setContacts(parsedContacts);
-    }
-  }, []);
 
   useEffect(() => {
     localStorage.setItem('phoneContacts', JSON.stringify(contacts));
